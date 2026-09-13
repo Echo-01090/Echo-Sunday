@@ -75,6 +75,11 @@ function lowerBound(value) {
   return Math.floor(Number(match[1]) * multiplier);
 }
 
+function boughtLastMonthEvidence(value) {
+  const candidate = text(value, 100);
+  return /\bbought\b.*\bpast month\b/i.test(candidate) ? candidate : "";
+}
+
 function parseJsonExtraction(entry) {
   const candidate = entry?.json ?? entry?.data?.json;
   if (candidate && typeof candidate === "object" && !Array.isArray(candidate)) return candidate;
@@ -129,7 +134,7 @@ function normalize(entry, minPrice, maxPrice) {
   if (asin !== urlData.asin) return null;
   const rating = number(extracted.rating);
   const reviewCount = integer(extracted.reviewCount);
-  const boughtLastMonthText = text(extracted.boughtLastMonthText, 100);
+  const boughtLastMonthText = boughtLastMonthEvidence(extracted.boughtLastMonthText);
   const colorOptions = Array.isArray(extracted.colorOptions)
     ? extracted.colorOptions.map((value) => text(value, 60)).filter(Boolean).slice(0, 12)
     : [];
