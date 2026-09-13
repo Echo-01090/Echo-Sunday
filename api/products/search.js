@@ -21,7 +21,8 @@ const PRODUCT_SCHEMA = {
     boughtLastMonthText: { type: ["string", "null"], description: "Exact visible bought-in-past-month text, if present." },
     availability: { type: ["string", "null"], description: "Current availability text." },
     deliverySummary: { type: ["string", "null"], description: "General delivery summary without a shopper-specific promise." }
-  }
+  },
+  required: ["asin", "title", "imageUrl", "price", "material", "size", "pieceCount", "colorOptions", "rating", "reviewCount", "boughtLastMonthText", "availability", "deliverySummary"]
 };
 
 function sendError(response, status, code, message) {
@@ -216,7 +217,7 @@ module.exports = async function handler(request, response) {
 
   const query = body.query.trim();
   const firecrawlRequest = {
-    query: `${query} kitchen utensil set`,
+    query: `${query} kitchen utensil set site:amazon.com/dp`,
     limit: RESULT_PAGE_LIMIT,
     sources: ["web"],
     includeDomains: ["amazon.com"],
@@ -225,7 +226,11 @@ module.exports = async function handler(request, response) {
     timeout: UPSTREAM_TIMEOUT_MS,
     ignoreInvalidURLs: true,
     scrapeOptions: {
-      formats: [{ type: "json", schema: PRODUCT_SCHEMA }],
+      formats: [{
+        type: "json",
+        prompt: "Extract only visible facts for this Amazon product page. Use the current one-time purchase price, not a list price, coupon, monthly payment, or price range. Use null when a fact is absent.",
+        schema: PRODUCT_SCHEMA
+      }],
       onlyMainContent: true,
       location: { country: "US", languages: ["en-US"] },
       removeBase64Images: true,
