@@ -44,9 +44,9 @@ async function runSearch() {
       return;
     }
     renderList(items);
-    const mode = config.sampleMode ? "sample " : "live ";
+    const mode = config.sampleMode ? "sample " : "ranked ";
     const retrieved = config.sampleMode ? "" : ` Retrieved ${new Date().toLocaleString()}.`;
-    setStatus(`${items.length} ${mode}${items.length === 1 ? "match" : "matches"} found.${retrieved} ${config.availabilityNotice}`);
+    setStatus(`${items.length} ${mode}${items.length === 1 ? "finalist" : "finalists"} found.${retrieved} ${config.availabilityNotice}`);
   } catch (error) {
     showError(error instanceof Error ? error.message : "Something went wrong while preparing the shortlist.");
   } finally {

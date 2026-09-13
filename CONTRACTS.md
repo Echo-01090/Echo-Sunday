@@ -50,7 +50,7 @@ There is no public product-detail route. Phase 2 enriches the bounded server-sid
 
 Errors use `{ error: { code: string, message: string } }`.
 
-The search route is implemented in Phase 1. It is same-origin, server-only at the provider boundary, and never returns the Firecrawl credential.
+The search route is implemented and ranked in Phase 2. It is same-origin, server-only at the provider boundary, and never returns the Firecrawl credential.
 
 ## Ranking
 

@@ -82,8 +82,17 @@ function createCard(item, index) {
   price.textContent = item.price === null ? config.fallbackText : new Intl.NumberFormat("en-US", { style: "currency", currency: item.currency }).format(item.price);
   const rating = document.createElement("span");
   rating.className = "rating";
-  rating.textContent = item.rating === null ? "Rating not provided" : `★ ${item.rating.toFixed(1)}`;
+  const reviewText = item.reviewCount === null ? "" : ` · ${item.reviewCount.toLocaleString("en-US")} reviews`;
+  rating.textContent = item.rating === null ? "Rating not provided" : `★ ${item.rating.toFixed(1)}${reviewText}`;
   priceRow.append(price, rating);
+
+  const scoreRow = document.createElement("div");
+  scoreRow.className = "score-row";
+  const score = document.createElement("strong");
+  score.textContent = item.score === null ? "Score not provided" : `${item.score.toFixed(1)} match score`;
+  const confidence = document.createElement("span");
+  confidence.textContent = `${displayText(item.dataConfidence)} evidence confidence`;
+  scoreRow.append(score, confidence);
 
   const details = document.createElement("dl");
   details.className = "details";
@@ -93,16 +102,22 @@ function createCard(item, index) {
     detail("Size", item.size),
     detail("Colors", item.colorOptions.length ? item.colorOptions.join(", ") : null),
     detail("Recent signal", item.boughtLastMonthText),
-    detail("Availability", item.availability)
+    detail("Availability", item.availability),
+    detail("Delivery", item.deliverySummary)
   );
 
   const why = document.createElement("div");
   why.className = "why";
   const whyTitle = document.createElement("strong");
   whyTitle.textContent = "Why this ranked here";
-  const whyCopy = document.createElement("p");
-  whyCopy.textContent = item.reasons.length ? item.reasons.join(" ") : "Ranking evidence is not provided yet.";
-  why.append(whyTitle, whyCopy);
+  const whyList = document.createElement("ul");
+  const reasons = item.reasons.length ? item.reasons : ["Ranking evidence is not provided."];
+  reasons.forEach((reason) => {
+    const listItem = document.createElement("li");
+    listItem.textContent = reason;
+    whyList.append(listItem);
+  });
+  why.append(whyTitle, whyList);
 
   const link = document.createElement("a");
   link.className = "amazon-link";
@@ -111,7 +126,7 @@ function createCard(item, index) {
   link.rel = "noopener noreferrer";
   link.innerHTML = "<span>View on Amazon</span><span aria-hidden=\"true\">↗</span>";
 
-  body.append(title, priceRow, details, why, link);
+  body.append(title, priceRow, scoreRow, details, why, link);
   card.append(rank, imageWrap, body);
   return card;
 }

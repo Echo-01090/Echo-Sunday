@@ -40,3 +40,16 @@ Run this numbered checklist by hand in about three minutes.
 30. Every returned product contains every normalized key with the documented missing-value defaults.
 31. Empty and upstream-failure states remain readable, and the busy state always clears.
 32. The public deployment performs one small live US search successfully with provider operation, result-page, and credit counts recorded during verification.
+
+## Phase 2 checks
+
+33. No more than five finalists are returned or rendered.
+34. Rank badges are consecutive from `#1` and match server score order.
+35. Price, rating, and popularity weights remain `0.3333`, `0.3333`, and `0.3334`.
+36. Ranking sorts by unrounded score, then higher rating, lower price, and stable source position.
+37. Repeating ranking with identical normalized inputs produces the same output without mutating the inputs.
+38. Each finalist has factual price, rating, and popularity reasons, including explicit missing-evidence notes.
+39. Score, review count, material, size, piece count, colors, availability, delivery, and confidence render when supplied.
+40. The server tolerates incomplete individual Firecrawl results and ranks the remaining eligible candidates.
+41. One submitted action uses one bounded Search operation and no more than ten scraped product pages.
+42. The final public site passes desktop and 375px checks with loading, empty, error, focus, and keyboard behavior intact.

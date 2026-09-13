@@ -2,9 +2,9 @@
 
 Kitchen Set Shortlist is a small product-comparison website for US Amazon shoppers. A shopper provides a kitchen-utensil-set search phrase and budget, then receives a clear shortlist based on general Amazon.com availability signals.
 
-## Phase 1 status
+## Phase 2 status
 
-Phase 1 uses a same-origin serverless route to run one bounded Firecrawl Search after a shopper submits the form. The route accepts only Amazon.com product URLs, normalizes a fixed product shape, and filters missing prices, out-of-range prices, and explicit unavailability. The Firecrawl credential remains server-side.
+Phase 2 completes the MVP. One bounded Firecrawl Search discovers and extracts up to ten Amazon.com product pages after a shopper submits the form. Eligible products are ranked deterministically by price, rating, and recent-purchase evidence, then no more than five finalists are returned with factual explanations and richer product details. The Firecrawl credential remains server-side.
 
 Set the exact server environment variable `FIRECRAWL_API_KEY` in Vercel Production. Do not place the key in browser code or Git-tracked files.
 

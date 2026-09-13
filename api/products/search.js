@@ -1,6 +1,8 @@
 const FIRECRAWL_SEARCH_URL = "https://api.firecrawl.dev/v2/search";
+const { rankProducts } = require("./ranking.js");
 const MAX_QUERY_LENGTH = 80;
-const RESULT_PAGE_LIMIT = 5;
+const RESULT_PAGE_LIMIT = 10;
+const FINALIST_LIMIT = 5;
 const UPSTREAM_TIMEOUT_MS = 24000;
 const NOTICE = "Availability is general. Confirm final price, stock, seller, and delivery on Amazon.";
 
@@ -228,7 +230,7 @@ module.exports = async function handler(request, response) {
     scrapeOptions: {
       formats: [{
         type: "json",
-        prompt: "Extract only visible facts for this Amazon product page. Use the current one-time purchase price, not a list price, coupon, monthly payment, or price range. Use null when a fact is absent.",
+        prompt: "Extract only visible facts for this Amazon product page. Use the current one-time purchase price, not a list price, coupon, monthly payment, or price range. Preserve the visible material, size, piece count, color choices, availability, delivery, rating, review count, and bought-in-past-month evidence. Use null when a fact is absent.",
         schema: PRODUCT_SCHEMA
       }],
       onlyMainContent: true,
@@ -261,10 +263,11 @@ module.exports = async function handler(request, response) {
   }
   const webResults = Array.isArray(payload?.data?.web) ? payload.data.web : [];
   const seen = new Set();
-  const items = webResults
+  const candidates = webResults
     .map((entry) => normalize(entry, body.minPrice, body.maxPrice))
     .filter((item) => item && !seen.has(item.asin) && seen.add(item.asin))
     .slice(0, RESULT_PAGE_LIMIT);
+  const items = rankProducts(candidates, FINALIST_LIMIT);
 
   response.setHeader("X-Firecrawl-Operations", String(upstream.attempts));
   response.setHeader("X-Firecrawl-Result-Pages", String(webResults.length));
