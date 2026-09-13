@@ -3,86 +3,37 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Find a concise shortlist of current Amazon.com kitchen utensil sets within your budget.">
+    <meta name="description" content="Get a concise, personalized shortlist of books from Open Library.">
     <meta name="theme-color" content="#1d4ed8">
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%231d4ed8'/%3E%3Cpath d='M18 12v18c0 7 4 11 10 12v10h8V42c6-1 10-5 10-12V12h-6v17c0 4-2 6-4 7V12h-8v24c-3-1-4-3-4-7V12z' fill='%235eead4'/%3E%3C/svg%3E">
     <link rel="stylesheet" href="style.css">
-    <title>Kitchen Set Shortlist</title>
+    <title>Book Decision Tool</title>
   </head>
   <body>
     <header class="site-header">
-      <a class="brand" href="#main-content" aria-label="Kitchen Set Shortlist home">
-        <span class="brand-mark" aria-hidden="true">K</span>
-        <span>Kitchen Set Shortlist</span>
-      </a>
-      <span class="mode-pill"><span aria-hidden="true"></span> Phase 2 ranked shortlist</span>
+      <a class="brand" href="#main-content" aria-label="Book Decision Tool home"><span class="brand-mark" aria-hidden="true">B</span><span>Book Decision Tool</span></a>
+      <span class="mode-pill"><span aria-hidden="true"></span> Personalized Top 5</span>
     </header>
-
     <main id="main-content">
       <section class="intro" aria-labelledby="page-title">
-        <div>
-          <p class="eyebrow">Kitchen tools, clearly compared</p>
-          <h1 id="page-title">Build a shortlist around your budget.</h1>
-          <p class="intro-copy">Enter a phrase and budget to compare up to five current Amazon.com finalists by price, rating, and recent-purchase evidence.</p>
-        </div>
-        <div class="smoke-card" aria-label="Deployment smoke test status">
-          <span class="signal" aria-hidden="true"></span>
-          <div>
-            <strong>Your Kitchen Shortlist Is Ready to Begin.</strong>
-            <span>Codex → GitHub → Vercel: ALIVE</span>
-          </div>
-        </div>
+        <div><p class="eyebrow">OPEN LIBRARY • RANKED SHORTLIST</p><h1 id="page-title">Find your next book.</h1><p class="intro-copy">Describe what you want to read, choose what matters most, and get five evidence-based finalists.</p></div>
+        <div class="smoke-card"><span class="signal" aria-hidden="true"></span><div><strong>Your book shortlist is ready.</strong><span>Open Library • live discovery</span></div></div>
       </section>
-
       <section class="search-panel" aria-labelledby="search-title">
-        <div class="panel-heading">
-          <div>
-            <p class="step-label">01 / START HERE</p>
-            <h2 id="search-title">Describe your ideal set</h2>
-          </div>
-        </div>
-
+        <div class="panel-heading"><div><p class="step-label">01 / START HERE</p><h2 id="search-title">Describe your next read</h2></div></div>
         <form id="search-form" novalidate>
-          <div class="field field-query">
-            <label for="query">Search phrase</label>
-            <input id="query" name="query" type="search" value="silicone kitchen utensil set" maxlength="80" autocomplete="off" required>
-          </div>
-          <div class="field field-price">
-            <label for="min-price">Min price</label>
-            <div class="money-input"><span aria-hidden="true">$</span><input id="min-price" name="minPrice" type="number" value="20" min="0" step="0.01" required></div>
-          </div>
-          <div class="field field-price">
-            <label for="max-price">Max price</label>
-            <div class="money-input"><span aria-hidden="true">$</span><input id="max-price" name="maxPrice" type="number" value="60" min="0" step="0.01" required></div>
-          </div>
-          <button id="submit-button" class="primary-button" type="submit">
-            <span>Find My Top 5</span><span aria-hidden="true">→</span>
-          </button>
+          <div class="field field-query"><label for="goal">What would you like to read?</label><input id="goal" name="goal" type="search" value="a short classic novel that is easy to get into" minlength="3" maxlength="280" autocomplete="off" required></div>
+          <fieldset class="preference-field"><legend>Prioritize</legend><div class="preference-options"><label><input type="checkbox" name="preferences" value="popular" checked> Popular</label><label><input type="checkbox" name="preferences" value="recent"> Recent</label><label><input type="checkbox" name="preferences" value="classic" checked> Classic</label><label><input type="checkbox" name="preferences" value="short" checked> Shorter</label><label><input type="checkbox" name="preferences" value="ebook"> Ebook</label></div></fieldset>
+          <button id="submit-button" class="primary-button" type="submit"><span>Find My Top 5</span><span aria-hidden="true">→</span></button>
         </form>
+        <p class="form-note">Examples: “hopeful science fiction”, “a concise history of Japan”, or “literary fiction about friendship”.</p>
       </section>
-
       <section class="results-section" aria-labelledby="results-title">
-        <div class="results-heading">
-          <div>
-            <p class="step-label">02 / YOUR SHORTLIST</p>
-            <h2 id="results-title">Strong contenders, clearly compared</h2>
-          </div>
-          <div class="demo-controls" aria-label="Sample-mode state previews">
-            <span>Preview states:</span>
-            <button type="button" data-demo-state="results">Results</button>
-            <button type="button" data-demo-state="empty">Empty</button>
-            <button type="button" data-demo-state="error">Error</button>
-          </div>
-        </div>
-
-        <div id="status" class="status" role="status" aria-live="polite">Enter a phrase and budget to search current Amazon.com product pages.</div>
+        <div class="results-heading"><div><p class="step-label">02 / YOUR SHORTLIST</p><h2 id="results-title">Strong contenders, clearly compared</h2></div></div>
+        <div id="status" class="status" role="status" aria-live="polite">Describe a reading goal and choose priorities to get a ranked Open Library shortlist.</div>
         <div id="results" class="results-grid" aria-live="polite"></div>
       </section>
     </main>
-
-    <footer>
-      <p>Live results are general discovery evidence. Confirm final price, stock, seller, and delivery on Amazon.</p>
-    </footer>
+    <footer><p>Book metadata can be incomplete or change. Confirm reading and ebook access on Open Library.</p></footer>
     <script type="module" src="app.js"></script>
   </body>
 </html>

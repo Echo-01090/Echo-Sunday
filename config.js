@@ -1,14 +1,11 @@
 export const config = Object.freeze({
   sampleDataPath: "data/sample.json",
-  searchRoute: "/api/products/search",
-  maximumQueryLength: 80,
-  candidateLimit: 10,
+  searchRoute: "/api/books/recommend",
+  maximumGoalLength: 280,
+  candidateLimit: 25,
   finalistLimit: 5,
-  firecrawlResultPageLimit: 10,
-  maximumFirecrawlCreditsPerAction: null,
-  requestTimeoutMs: 30000,
-  scoringWeights: Object.freeze({ price: 0.3333, rating: 0.3333, popularity: 0.3334 }),
-  sampleMode: false,
+  requestTimeoutMs: 18000,
+  defaultPreferences: Object.freeze(["popular"]),
   fallbackText: "Not provided",
-  availabilityNotice: "Availability is general. Confirm final price, stock, and delivery on Amazon."
+  availabilityNotice: "Book metadata can be incomplete or change. Confirm reading and ebook access on Open Library."
 });

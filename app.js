@@ -3,82 +3,33 @@ import { source } from "./source.js";
 import { clearResults, renderList, setBusy, setStatus, showEmpty, showError } from "./ui.js";
 
 const form = document.querySelector("#search-form");
-const demoButtons = document.querySelectorAll("[data-demo-state]");
-const demoControls = document.querySelector(".demo-controls");
 
 function readParams() {
   const formData = new FormData(form);
-  const minPrice = String(formData.get("minPrice") ?? "").trim();
-  const maxPrice = String(formData.get("maxPrice") ?? "").trim();
-  return {
-    query: String(formData.get("query") ?? "").trim(),
-    minPrice: minPrice === "" ? Number.NaN : Number(minPrice),
-    maxPrice: maxPrice === "" ? Number.NaN : Number(maxPrice)
-  };
+  return { goal: String(formData.get("goal") ?? "").trim(), preferences: formData.getAll("preferences").map(String) };
 }
 
 function validate(params) {
-  if (params.query.length < 2) return "Enter a search phrase with at least 2 characters.";
-  if (params.query.length > config.maximumQueryLength) return `Keep the search phrase under ${config.maximumQueryLength} characters.`;
-  if (!Number.isFinite(params.minPrice) || !Number.isFinite(params.maxPrice) || params.minPrice < 0 || params.maxPrice < 0) return "Enter valid prices of zero or more.";
-  if (params.minPrice > params.maxPrice) return "Minimum price cannot be greater than maximum price.";
-  return "";
+  return params.goal.length < 3 || params.goal.length > config.maximumGoalLength ? `Describe your reading goal in 3–${config.maximumGoalLength} characters.` : "";
 }
 
 async function runSearch() {
   const params = readParams();
   const validationMessage = validate(params);
-  if (validationMessage) {
-    clearResults();
-    showError(validationMessage);
-    return;
-  }
-
+  if (validationMessage) { clearResults(); showError(validationMessage); return; }
   setBusy(true);
-  setStatus(config.sampleMode ? "Comparing sample kitchen sets…" : "Searching current Amazon.com product pages…");
+  setStatus("Finding Open Library books and ranking your top five…");
   clearResults();
   try {
     const items = await source.load(params);
-    if (!items.length) {
-      showEmpty(config.sampleMode ? "No sample products match that price range. Try widening your budget." : "No eligible Amazon products were found in that price range. Try widening your budget or changing the phrase.");
-      return;
-    }
+    if (!items.length) { showEmpty("No matching books were found. Try a broader reading goal or fewer preferences."); return; }
     renderList(items);
-    const mode = config.sampleMode ? "sample " : "ranked ";
-    const retrieved = config.sampleMode ? "" : ` Retrieved ${new Date().toLocaleString()}.`;
-    setStatus(`${items.length} ${mode}${items.length === 1 ? "finalist" : "finalists"} found.${retrieved} ${config.availabilityNotice}`);
+    setStatus(`Ranked ${items.length} book${items.length === 1 ? "" : "s"} from Open Library results retrieved ${new Date().toLocaleString()}. ${config.availabilityNotice}`);
   } catch (error) {
-    showError(error instanceof Error ? error.message : "Something went wrong while preparing the shortlist.");
-  } finally {
-    setBusy(false);
-  }
+    showError(error instanceof Error ? error.message : "Something went wrong while preparing recommendations.");
+  } finally { setBusy(false); }
 }
 
-form.addEventListener("submit", (event) => {
-  event.preventDefault();
-  runSearch();
-});
-
-demoControls.hidden = !config.sampleMode;
-
-demoButtons.forEach((button) => {
-  button.addEventListener("click", async () => {
-    const state = button.dataset.demoState;
-    if (state === "results") await runSearch();
-    if (state === "empty") {
-      clearResults();
-      showEmpty("No sample products match that price range. Try widening your budget.");
-    }
-    if (state === "error") {
-      clearResults();
-      showError("Sample preview: product information could not be loaded. Please try again.");
-    }
-  });
-});
-
-if (config.sampleMode) {
-  runSearch();
-} else {
-  clearResults();
-  setStatus("Enter a phrase and budget to search current Amazon.com product pages.");
-}
+form.addEventListener("submit", (event) => { event.preventDefault(); runSearch(); });
+clearResults();
+setStatus("Describe a reading goal and choose priorities to get a ranked Open Library shortlist.");
