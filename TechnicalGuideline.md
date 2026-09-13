@@ -36,20 +36,23 @@ Use only:
 - plain browser JavaScript using ES modules;
 - Vercel serverless Node.js API routes;
 - the built-in `fetch` and `URL`/`URLSearchParams` APIs;
-- SerpApi Amazon Search and Amazon Product endpoints;
+- Firecrawl Search and Scrape capabilities through its REST API;
 - Git and GitHub;
 - Vercel.
 
 No frontend framework, CSS framework, bundler, UI library, state library, linter, test runner, or database is required for the MVP. Do not install a package when a standard platform API is sufficient.
 
-### Why SerpApi is used
+### Why Firecrawl is used
 
-The Amazon Search API accepts a keyword query, targets `amazon.com`, supports a `delivery_zip` parameter, and returns structured fields including price, rating, image, review count, and sometimes `bought_last_month`. Product-detail requests can enrich the five finalists. Keep the provider behind the project's own normalized route so it can be replaced later without rewriting the interface.
+Firecrawl officially documents Amazon product discovery and structured product-page extraction. The preferred MVP flow uses Firecrawl Search restricted to `amazon.com`, with bounded scrape options and a product JSON schema. This gives the project one provider for discovery and extraction while keeping ranking deterministic in project code.
+
+Firecrawl's ordinary Search/Scrape flow provides general US-facing Amazon.com content; it does not guarantee ZIP-specific stock or delivery. Do not use Interact to set a delivery address in this MVP. Keep Firecrawl behind the project's own normalized route so the interface does not depend on provider-specific fields.
 
 Reference documentation:
 
-- <https://serpapi.com/amazon-search-api>
-- <https://serpapi.com/amazon-product-api>
+- <https://docs.firecrawl.dev/developer-guides/common-sites/amazon>
+- <https://docs.firecrawl.dev/api-reference/endpoint/search>
+- <https://docs.firecrawl.dev/api-reference/endpoint/scrape>
 
 Provider responses and terms can change. Recheck the documentation before implementing Phase 1 and record any contract difference before coding.
 
@@ -68,14 +71,14 @@ Provider responses and terms can change. Recheck the documentation before implem
 
 - Add `POST /api/products/search`.
 - Connect only the inside of `source.load(params)` to the same-origin route.
-- Validate query, ZIP, and price range twice: frontend for usability, backend for trust.
+- Validate query and price range twice: frontend for usability, backend for trust.
 - Normalize and limit the provider response.
 
 ### Phase 2 - Ranking, detail enrichment, and polish
 
 - Add deterministic ranking.
-- Use `source.detail(id)` through the project's server-side route for finalists only.
-- Enrich at most five products.
+- Expand the bounded Firecrawl JSON schema for richer evidence while keeping the result-page cap unchanged.
+- Enrich only within the same restricted candidate set.
 - Complete responsive and reliability behavior without adding technology.
 
 ---
@@ -101,8 +104,7 @@ README.md           Purpose, local use, phases, and deployment
 Phase 1 may add only what is needed for the live integration:
 
 ```text
-api/products/search.js    Validated SerpApi search proxy
-api/products/detail.js    Added in Phase 2 for finalist enrichment
+api/products/search.js    Validated Firecrawl search/extraction proxy
 package.json              Only if Vercel/runtime configuration requires it
 ```
 
@@ -115,7 +117,7 @@ node_modules
 .DS_Store
 ```
 
-Do not put API keys, example keys, copied provider responses, or user ZIP codes in committed files.
+Do not put API keys, example keys, copied provider responses, or user search inputs in committed files.
 
 ---
 
@@ -158,7 +160,7 @@ renderList(items)
 clearResults()
 ```
 
-`renderList(items)` receives only normalized product objects. It must not fetch, score products, inspect SerpApi fields, or read environment variables.
+`renderList(items)` receives only normalized product objects. It must not fetch, score products, inspect Firecrawl fields, or read environment variables.
 
 ### `source.js`
 
@@ -174,11 +176,11 @@ source.list()
 Phase 0 behavior:
 
 - `load` returns normalized sample products.
-- `detail` returns one normalized sample product.
+- `detail` returns one normalized sample product only while demonstrating Phase 0 states.
 - `save` throws `Saving is not used in this project.`
 - `list` returns `[]`.
 
-Phase 1 changes only the inside of `load` so it calls the same-origin search route. Phase 2 changes only the inside of `detail` so it calls the same-origin detail route. Do not expose SerpApi URLs or its API key here.
+Phase 1 changes only the inside of `load` so it calls the same-origin search route. After sample-state testing, `detail` throws `Separate detail loading is not used in this project.` Phase 2 enriches the bounded server response rather than adding browser-side provider calls. Do not expose Firecrawl URLs or its API key here.
 
 ### `config.js`
 
@@ -187,10 +189,10 @@ Export one frozen public configuration object. It should hold values such as:
 - sample-data path;
 - same-origin route paths;
 - maximum query length;
-- ZIP pattern;
 - candidate limit;
 - finalist limit of five;
-- provider-request limit of six;
+- Firecrawl result-page limit of ten;
+- maximum accepted Firecrawl credits for one action, if the current API exposes enforceable credit controls;
 - request timeout;
 - scoring weights;
 - feature flags for sample/live mode;
@@ -222,7 +224,7 @@ Codex must stop and ask before changing anything under that heading. It may exte
 
 ### Frontend may
 
-- collect query, ZIP, and price inputs;
+- collect query and price inputs;
 - perform usability validation;
 - call same-origin project routes through `source.js`;
 - render normalized products and readable states;
@@ -230,18 +232,18 @@ Codex must stop and ask before changing anything under that heading. It may exte
 
 ### Frontend must not
 
-- contain or receive `SERPAPI_KEY`;
-- call SerpApi or Amazon directly;
+- contain or receive `FIRECRAWL_API_KEY`;
+- call Firecrawl or Amazon directly;
 - interpret raw provider responses;
 - claim that missing values are known;
-- store the ZIP code after the active request;
-- calculate final provider availability independently.
+- claim ZIP-specific or exact-delivery availability;
+- calculate provider availability independently.
 
 ### Backend may
 
 - validate untrusted inputs;
-- read `SERPAPI_KEY`;
-- call approved SerpApi endpoints;
+- read `FIRECRAWL_API_KEY`;
+- call the approved Firecrawl Search endpoint with bounded scrape options;
 - filter, score, normalize, and limit responses;
 - return safe structured errors;
 - apply timeouts and bounded retries.
@@ -250,10 +252,10 @@ Codex must stop and ask before changing anything under that heading. It may exte
 
 - log secrets or full request URLs containing the key;
 - return raw provider responses;
-- persist search phrases or ZIP codes;
+- persist search phrases;
 - accept a caller-supplied provider URL;
 - fetch arbitrary URLs;
-- scrape Amazon directly;
+- scrape Amazon directly outside the approved Firecrawl request;
 - exceed the per-action request cap.
 
 ---
@@ -267,7 +269,6 @@ Request:
 ```json
 {
   "query": "silicone kitchen utensil set",
-  "zipCode": "10001",
   "minPrice": 20,
   "maxPrice": 60
 }
@@ -277,7 +278,6 @@ Validation:
 
 - JSON body only;
 - `query` trimmed, 2 to the configured maximum characters;
-- `zipCode` exactly five digits for this MVP;
 - finite numeric prices greater than or equal to zero;
 - `minPrice <= maxPrice`;
 - reject unexpected methods with 405;
@@ -285,14 +285,19 @@ Validation:
 
 Provider request:
 
-- `engine=amazon`;
-- `amazon_domain=amazon.com`;
-- `language=en_US`;
-- `k=<validated query>`;
-- `delivery_zip=<validated ZIP>`;
-- API key added only on the server;
-- use JSON output;
+- `POST https://api.firecrawl.dev/v2/search`;
+- `query` combines the validated phrase with the required kitchen-utensil-set context;
+- `sources` contains web results only;
+- `includeDomains` contains only `amazon.com`;
+- `country` is `US` and `location` is a general United States search context;
+- `limit` is at most ten;
+- `ignoreInvalidURLs` is true;
+- `scrapeOptions` requests only main content and a tightly scoped product JSON schema;
+- scrape location uses country `US` and language `en-US`;
+- the Bearer API key is added only on the server;
 - apply the configured timeout.
+
+The schema should request only fields needed by the product contract. Firecrawl JSON extraction may use provider-managed extraction internally, but the project must not call a separate LLM or use generated prose for ranking.
 
 Success response:
 
@@ -300,34 +305,16 @@ Success response:
 {
   "items": [],
   "retrievedAt": "2026-09-13T00:00:00.000Z",
-  "location": { "zipCode": "10001" },
-  "notice": "Confirm final price and availability on Amazon."
+  "marketplace": "Amazon.com (US)",
+  "notice": "Availability is general. Confirm final price, stock, and delivery on Amazon."
 }
 ```
 
-Do not echo the query or ZIP unnecessarily in logs. Returning the ZIP in the immediate response is acceptable for interface confirmation, but it must not be persisted.
+Do not echo the query unnecessarily in logs, and do not persist it.
 
-### `POST /api/products/detail`
+### No separate public detail route
 
-Added in Phase 2.
-
-Request:
-
-```json
-{
-  "asin": "B000000000",
-  "zipCode": "10001"
-}
-```
-
-Rules:
-
-- validate ASIN against a conservative alphanumeric pattern;
-- validate ZIP again;
-- request only one product per call;
-- normalize detail/specification/variant fields into the shared product shape;
-- return a partial normalized object if optional fields are absent;
-- never turn a failed detail lookup into invented data.
+This MVP does not expose a browser-callable product-detail route. Phase 2 enriches the server-side JSON schema used by the bounded Search flow. This prevents the browser from triggering unbounded per-product requests and keeps one user action within one controlled provider operation.
 
 ### Error response
 
@@ -348,7 +335,7 @@ Never include a stack trace, API key, full upstream URL, raw body, or internal e
 
 ## 9. Data normalization rules
 
-- Normalize on the server before data reaches `source.js`.
+- Normalize Firecrawl results on the server before data reaches `source.js`.
 - Deduplicate by ASIN before filtering and ranking.
 - Prefer a clean Amazon product URL supplied by the provider.
 - Require a numeric price for eligibility.
@@ -356,7 +343,7 @@ Never include a stack trace, API key, full upstream URL, raw body, or internal e
 - Preserve a provider's explicit recent-purchase phrase and separately parse a conservative numeric lower bound.
 - Support common suffixes such as `K+` and `M+`; unrecognized text remains visible but produces `null` numeric popularity.
 - Never substitute review count for units sold.
-- Material, size, piece count, and colors may come from structured product details/specifications/variants only.
+- Material, size, piece count, and colors may come only from Firecrawl's structured extraction of visible Amazon product-page evidence.
 - Do not use title guessing when structured data contradicts it.
 - If a field is unavailable, use the contract's missing value and show **Not provided**.
 - Strip markup and limit text lengths before returning data.
@@ -391,15 +378,15 @@ Multiply by 100 and round only for display. Sort using the unrounded value. Brea
 2. lower price;
 3. original stable source position.
 
-Explanations must cite facts already present on the card, for example: good relative price, strong rating, or high recent-purchase signal. Do not call an LLM.
+Explanations must cite facts already present on the card, for example: good relative price, strong rating, or high recent-purchase signal. Do not make a separate LLM call for explanations or ranking.
 
 ---
 
 ## 11. API usage and cost guardrails
 
-- Phase 1: at most one provider request per user action.
-- Phase 2: at most one search plus five finalist-detail requests per user action.
-- Never enrich every candidate.
+- Use at most one Firecrawl Search operation per user action.
+- Set the Search result limit to ten or fewer; never scrape more than ten Amazon result pages per action.
+- In Phase 2, enrich only the same bounded candidate set by expanding the schema; do not add per-card browser calls.
 - Never auto-paginate.
 - Do not run background searches.
 - Disable the submit button while a request is active.
@@ -407,9 +394,9 @@ Explanations must cite facts already present on the card, for example: good rela
 - Do not retry validation or authentication failures.
 - Put timeouts and result limits in configuration.
 - During development, prefer sample mode for UI work and reserve live calls for integration acceptance tests.
-- Report actual provider-call counts after each live test.
+- Report the Firecrawl operation count, result-page count, and returned `creditsUsed` after each live test when available.
 
-If the current SerpApi plan cannot support the acceptance tests, stop and explain the quota/cost constraint. Do not silently switch providers or scrape Amazon.
+If the current Firecrawl plan cannot support the acceptance tests, stop and explain the quota/cost constraint. Do not silently switch providers, use Interact, or implement a custom scraper.
 
 ---
 
@@ -418,7 +405,7 @@ If the current SerpApi plan cannot support the acceptance tests, stop and explai
 Use the server-side environment variable:
 
 ```text
-SERPAPI_KEY
+FIRECRAWL_API_KEY
 ```
 
 ### Local
@@ -437,7 +424,7 @@ Add it in the selected project's environment-variable settings and redeploy when
 - return it to the browser;
 - send it to any service other than the approved provider.
 
-Treat search phrases and ZIP codes as transient user input. Do not persist them, add analytics around them, or place them in server logs.
+Treat search phrases as transient user input. Do not persist them, add analytics around them, or place them in server logs.
 
 ---
 
@@ -515,7 +502,7 @@ Use least privilege.
 |---|---|---|
 | Project-folder edits | Current task/folder | Build files only |
 | Localhost browser | Allow once | Test one local origin |
-| SerpApi/internet access | Allow once | Current integration test |
+| Firecrawl/internet access | Allow once | Current integration test |
 | Package access | Allow once, only if required | Avoid unnecessary dependencies |
 | `.git` metadata | Current repository | Phase checkpoint |
 | GitHub control | Current conversation and selected repository | Publish checkpoints |
@@ -554,8 +541,8 @@ Unless a later approved specification explicitly changes scope, do not add:
 - database, authentication, or persistent user data;
 - payments, checkout, or order actions;
 - direct Amazon scraping or browser automation;
-- Firecrawl or another product-data provider;
-- LLMs, chat, agents, RAG, embeddings, or vector storage;
+- a second product-data provider, or Firecrawl Crawl/Interact/Agent features outside the approved Search flow;
+- separate project LLM calls, chat, agents, RAG, embeddings, or vector storage;
 - automated pagination, batch searches, background jobs, or alerts;
 - analytics or advertising trackers;
 - Docker or custom CI/CD;
@@ -569,14 +556,14 @@ If an excluded component appears necessary, Codex must stop and explain why. It 
 
 Before connecting live data:
 
-- confirm a SerpApi key exists without displaying it;
+- confirm a Firecrawl key exists without displaying it;
 - confirm the account's remaining search quota and expected cost;
 - recheck current Amazon Search and Product API fields;
-- test one small keyword search using a non-sensitive five-digit ZIP;
+- test one small kitchen-utensil-set keyword search in the general US context;
 - confirm whether material, size, piece count, colors, popularity, and availability are present for representative kitchen sets;
 - record unavailable fields as data gaps rather than expanding the stack;
 - confirm `.env.local` is ignored;
-- confirm the Vercel environment variable uses the exact name `SERPAPI_KEY`;
+- confirm the Vercel environment variable uses the exact name `FIRECRAWL_API_KEY`;
 - confirm the public endpoint cannot exceed configured request limits;
 - keep sample mode available for UI development and recovery.
 

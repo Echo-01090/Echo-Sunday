@@ -23,3 +23,5 @@ Run this numbered checklist by hand in about three minutes.
 16. Browser data access is contained in `source.js`.
 17. Public tunables are contained in `config.js`.
 18. The public deployment displays the Phase 0 smoke-test message.
+19. The interface requests no ZIP code and makes no ZIP-specific availability claim.
+20. The visible palette uses cobalt, teal, white, and coral without a black-and-yellow scheme.

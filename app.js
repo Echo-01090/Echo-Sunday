@@ -7,18 +7,18 @@ const demoButtons = document.querySelectorAll("[data-demo-state]");
 
 function readParams() {
   const formData = new FormData(form);
+  const minPrice = String(formData.get("minPrice") ?? "").trim();
+  const maxPrice = String(formData.get("maxPrice") ?? "").trim();
   return {
     query: String(formData.get("query") ?? "").trim(),
-    zipCode: String(formData.get("zipCode") ?? "").trim(),
-    minPrice: Number(formData.get("minPrice")),
-    maxPrice: Number(formData.get("maxPrice"))
+    minPrice: minPrice === "" ? Number.NaN : Number(minPrice),
+    maxPrice: maxPrice === "" ? Number.NaN : Number(maxPrice)
   };
 }
 
 function validate(params) {
   if (params.query.length < 2) return "Enter a search phrase with at least 2 characters.";
   if (params.query.length > config.maximumQueryLength) return `Keep the search phrase under ${config.maximumQueryLength} characters.`;
-  if (!config.zipPattern.test(params.zipCode)) return "Enter a five-digit US ZIP code.";
   if (!Number.isFinite(params.minPrice) || !Number.isFinite(params.maxPrice) || params.minPrice < 0 || params.maxPrice < 0) return "Enter valid prices of zero or more.";
   if (params.minPrice > params.maxPrice) return "Minimum price cannot be greater than maximum price.";
   return "";

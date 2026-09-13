@@ -1,10 +1,10 @@
 # Kitchen Set Shortlist
 
-Kitchen Set Shortlist is a small product-comparison website for US Amazon shoppers. A shopper provides a kitchen-utensil-set search phrase, a five-digit ZIP code, and a budget, then receives a clear shortlist.
+Kitchen Set Shortlist is a small product-comparison website for US Amazon shoppers. A shopper provides a kitchen-utensil-set search phrase and budget, then receives a clear shortlist based on general Amazon.com availability signals.
 
 ## Phase 0 status
 
-Phase 0 uses hand-written normalized sample products. It establishes the interface, module boundaries, contracts, responsive behavior, visible states, and deployment path. It does not use live Amazon data, an API route, an API key, or packages.
+Phase 0 uses hand-written normalized sample products. It establishes the interface, module boundaries, Firecrawl-ready contracts, responsive behavior, visible states, and deployment path. It does not use live Amazon data, an API route, an API key, or packages.
 
 ## Run locally
 
@@ -19,8 +19,8 @@ python -m http.server 4173
 ## Phases
 
 - **Phase 0:** sample-data foundation and deployment smoke test.
-- **Phase 1:** live Amazon search through a validated server-side route, with eligibility filtering.
-- **Phase 2:** deterministic top-five ranking, finalist detail enrichment, and final polish.
+- **Phase 1:** live Amazon discovery through a validated, bounded Firecrawl Search route, with eligibility filtering.
+- **Phase 2:** deterministic top-five ranking, richer bounded extraction, and final polish.
 
 See `CONTRACTS.md` before changing names or shapes, and run every item in `CHECKS.md` at each phase checkpoint.
 

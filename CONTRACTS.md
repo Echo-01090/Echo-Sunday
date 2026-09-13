@@ -36,7 +36,6 @@ Missing text uses `""`, missing numbers use `null`, and missing lists use `[]`. 
 
 - `search-form`
 - `query`
-- `zip-code`
 - `min-price`
 - `max-price`
 - `submit-button`
@@ -45,9 +44,9 @@ Missing text uses `""`, missing numbers use `null`, and missing lists use `[]`. 
 
 ## Route contracts
 
-`POST /api/products/search` accepts `{ query: string, zipCode: string, minPrice: number, maxPrice: number }` and returns `{ items: Product[], retrievedAt: string, location: { zipCode: string }, notice: string }`.
+`POST /api/products/search` accepts `{ query: string, minPrice: number, maxPrice: number }` and returns `{ items: Product[], retrievedAt: string, marketplace: string, notice: string }`.
 
-`POST /api/products/detail` accepts `{ asin: string, zipCode: string }` and returns a normalized product object or a safe error.
+There is no public product-detail route. Phase 2 enriches the bounded server-side Firecrawl Search schema rather than adding browser-triggered per-product requests.
 
 Errors use `{ error: { code: string, message: string } }`.
 
@@ -63,7 +62,8 @@ Weights are price `0.3333`, rating `0.3333`, and popularity `0.3334`. Sort by un
 - DOM IDs listed above.
 - UI exports: `setBusy(isBusy)`, `setStatus(message)`, `showError(message)`, `showEmpty(message)`, `renderList(items)`, `clearResults()`.
 - Source export: one object named `source` with async methods `load(params)`, `detail(id)`, `save(record)`, and `list()`.
-- Search, detail, and error route request/response shapes above.
+- `source.detail(id)` returns a sample product during Phase 0; after sample-state testing it throws `Separate detail loading is not used in this project.` because enrichment remains server-side.
+- Search and error route request/response shapes above, including the rule that no public detail route exists.
 - Ranking weights and tie-break order above.
 
 Any extension must be deliberate, documented here first, and verified against older rendering behavior.

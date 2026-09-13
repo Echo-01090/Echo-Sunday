@@ -2,9 +2,9 @@
 
 **Audience:** A university student learning to build with Codex  
 **Build mode:** One supervised phase at a time  
-**Prerequisites:** Codex, GitHub, Vercel, and a SerpApi account/API key  
+**Prerequisites:** Codex, GitHub, Vercel, and a Firecrawl account/API key  
 **Deployment:** GitHub and Vercel  
-**MVP target:** A live website that searches Amazon.com for kitchen utensil sets, applies a US ZIP code and price range, and explains a ranked top-five shortlist.
+**MVP target:** A live website that searches Amazon.com for kitchen utensil sets, applies a price range, and explains a ranked top-five shortlist using general US availability signals.
 
 ---
 
@@ -15,9 +15,8 @@ Build a small product-comparison website for US Amazon shoppers who feel overwhe
 The completed MVP lets a shopper:
 
 - enter a kitchen-utensil-set search phrase;
-- enter a five-digit US ZIP code;
 - set a minimum and maximum price in US dollars;
-- request current Amazon.com search results through a server-side API route;
+- request current Amazon.com product results through a server-side Firecrawl integration;
 - exclude results outside the price range and results reported as unavailable;
 - receive up to five ranked recommendations;
 - understand the ranking through visible evidence;
@@ -30,13 +29,13 @@ This is a fixed comparison workflow, not an autonomous shopping agent. The stude
 
 ## 2. MVP pitch
 
-**Kitchen Set Shortlist helps US Amazon shoppers turn a crowded search for kitchen utensil sets into five understandable choices. A shopper supplies a search phrase, ZIP code, and budget; the site checks current listings, removes unsuitable products, and ranks the remaining options by price, rating, and recent-purchase evidence.**
+**Kitchen Set Shortlist helps US Amazon shoppers turn a crowded search for kitchen utensil sets into five understandable choices. A shopper supplies a search phrase and budget; the site checks current Amazon.com pages, removes unsuitable products, and ranks the remaining options by price, rating, and recent-purchase evidence.**
 
 ---
 
 ## 3. Jobs-to-be-Done statement
 
-> When I face many similar kitchen utensil sets online, I want to quickly compare trustworthy choices within my budget and delivery area, so I can confidently make a good-value purchase without spending hours researching individual listings.
+> When I face many similar kitchen utensil sets online, I want to quickly compare trustworthy choices within my budget and practical needs, so I can confidently make a good-value purchase without spending hours researching individual listings.
 
 - **Functional job:** Find and compare suitable kitchen utensil sets.
 - **Emotional job:** Feel confident instead of overwhelmed.
@@ -57,16 +56,15 @@ A shopper using Amazon.com in the United States who wants a practical kitchen ut
 - Amazon.com only.
 - Kitchen utensil sets only.
 - One search at a time.
-- One five-digit US ZIP code per search.
 - One user-defined minimum and maximum price.
 - Up to five recommendations.
-- Current product data supplied by SerpApi.
-- Evidence-based, deterministic ranking without an LLM.
+- Current public product-page data supplied by Firecrawl Search and Scrape.
+- Evidence-based, deterministic ranking without a separate project LLM call.
 - Direct links to Amazon for final verification and purchase.
 
 ### Important product truth
 
-The website is a research aid, not the seller. Prices, stock, variants, discounts, and delivery information can change. Show a retrieval timestamp and tell the user to confirm final details on Amazon. Never claim an exact delivery promise unless the provider explicitly returned it.
+The website is a research aid, not the seller. Prices, stock, variants, discounts, and delivery information can change. Firecrawl provides general US-facing Amazon.com data, not address-specific delivery eligibility. Show a retrieval timestamp and tell the user to confirm final price, stock, and delivery on Amazon. Never claim ZIP-specific or exact delivery availability.
 
 ---
 
@@ -82,12 +80,9 @@ The website is a research aid, not the seller. Prices, stock, variants, discount
 Required controls:
 
 - Search phrase, with an example such as `silicone kitchen utensil set`.
-- US ZIP code.
 - Minimum price in USD.
 - Maximum price in USD.
 - Primary button: **Find My Top 5**.
-
-Show short privacy text explaining that only the ZIP code, not a full address, is requested.
 
 ### C. Status area
 
@@ -114,7 +109,7 @@ Show up to five cards in recommendation order. Each card must include:
 - size, when applicable;
 - number of tools/pieces in the set, when supplied;
 - color choices, when supplied;
-- availability or delivery evidence returned for the selected ZIP;
+- general Amazon.com availability evidence, when supplied;
 - a short **Why this ranked here** explanation;
 - **View on Amazon** link opening in a new tab.
 
@@ -132,7 +127,7 @@ A product may enter the ranked list only when:
 2. it has a valid Amazon product URL;
 3. it has a numeric current price;
 4. its price is within the user's inclusive minimum/maximum range;
-5. it was returned for the selected ZIP and is not explicitly marked unavailable or out of stock.
+5. its public Amazon.com page is not explicitly marked unavailable or out of stock.
 
 The UI must still tell the shopper to confirm final availability on Amazon.
 
@@ -180,7 +175,7 @@ Every product passed to the renderer must use this stable shape:
   reviewCount: 2400,
   boughtLastMonthText: "1K+ bought in past month",
   boughtLastMonthLowerBound: 1000,
-  availability: "Available for selected ZIP",
+  availability: "Generally available on Amazon.com",
   deliverySummary: "",
   score: 87.4,
   rank: 1,
@@ -219,7 +214,7 @@ Create the foundation described in `TechnicalGuideline.md`, including:
 - `CHECKS.md`;
 - `README.md`.
 
-Use sample product data only. Do not call SerpApi, create an API route, or request an API key in this phase. The page should demonstrate all visible states using the sample source.
+Use sample product data only. Do not call Firecrawl, create an API route, or request an API key in this phase. The page should demonstrate all visible states using the sample source.
 
 Suggested smoke-test copy:
 
@@ -251,7 +246,7 @@ Do not begin Phase 1 until the public page works and every Phase 0 acceptance cr
 
 ---
 
-## PHASE 1 - Live Amazon search and eligibility filtering
+## PHASE 1 - Live Amazon discovery and eligibility filtering
 
 ### Goal
 
@@ -259,16 +254,17 @@ Replace the sample implementation inside `source.load(params)` with a live serve
 
 ### Required behavior
 
-1. User enters a search phrase, ZIP code, minimum price, and maximum price.
+1. User enters a search phrase, minimum price, and maximum price.
 2. Frontend validates presence and basic formats.
 3. `source.load(params)` sends one same-origin request to `POST /api/products/search`.
 4. The server validates all inputs again.
-5. The server reads `SERPAPI_KEY` from its environment.
-6. The server calls the SerpApi Amazon Search API for `amazon.com`, using the search phrase and `delivery_zip`.
-7. The server normalizes the provider response and returns only the fields the frontend needs.
-8. Products without a numeric price, outside the inclusive price range, or explicitly unavailable are excluded.
-9. The page renders the qualifying results with basic evidence.
-10. Existing sample mode remains available only as a documented development fallback, controlled by configuration.
+5. The server reads `FIRECRAWL_API_KEY` from its environment.
+6. The server calls Firecrawl Search using a kitchen-utensil-set query, `includeDomains: ["amazon.com"]`, `country: "US"`, and a configured result limit.
+7. Search uses bounded scrape options with a product JSON schema so Firecrawl extracts available product evidence from the discovered Amazon pages.
+8. The server accepts only public `https://www.amazon.com/` product URLs, normalizes the Firecrawl response, and returns only the fields the frontend needs.
+9. Products without a numeric price, outside the inclusive price range, or explicitly unavailable are excluded.
+10. The page renders the qualifying results with basic evidence.
+11. Existing sample mode remains available only as a documented development fallback, controlled by configuration.
 
 ### Limits
 
@@ -277,19 +273,22 @@ Replace the sample implementation inside `source.load(params)` with a live serve
 - Maximum candidate count comes from `config.js`.
 - Ignore sponsored-result status for ranking; do not give sponsored items a scoring advantage.
 - No product-detail enrichment yet.
-- No direct browser request to SerpApi or Amazon.
+- No direct browser request to Firecrawl or Amazon.
+- No ZIP-specific or exact-delivery claim.
+- No Crawl, Interact, Agent, or autonomous browsing endpoint.
+- At most ten Amazon product pages may be searched/scraped per user action.
 - No raw provider response returned to the browser.
 
 ### Acceptance criteria
 
 1. All Phase 0 checks still pass.
-2. Valid inputs produce current Amazon.com search results.
-3. The request includes the supplied five-digit ZIP as `delivery_zip`.
-4. Invalid ZIP, blank query, invalid prices, and minimum greater than maximum receive readable messages.
+2. Valid inputs produce current public Amazon.com product results.
+3. Firecrawl Search is restricted to `amazon.com` and US search context.
+4. Blank query, invalid prices, and minimum greater than maximum receive readable messages.
 5. Products outside the price range do not appear.
 6. Explicitly unavailable products do not appear.
 7. A valid search with no qualifying results shows the empty state.
-8. Missing or invalid `SERPAPI_KEY` shows a safe, retryable error.
+8. Missing or invalid `FIRECRAWL_API_KEY` shows a safe, retryable error.
 9. The key never appears in browser code, Git, logs, or JSON responses.
 10. Provider failure or timeout does not produce a blank page.
 11. Result cards link to valid Amazon pages in new tabs using `noopener noreferrer`.
@@ -297,11 +296,11 @@ Replace the sample implementation inside `source.load(params)` with a live serve
 
 ### Suggested commit
 
-`Phase 1 - live Amazon search and filters`
+`Phase 1 - live Amazon discovery and filters`
 
 ### STOP GATE
 
-Report files changed, API requests used per search, dependencies added, checks performed, and unresolved data gaps. Stop before Phase 2.
+Report files changed, Firecrawl operations/result pages/credits used per search, dependencies added, checks performed, and unresolved data gaps. Stop before Phase 2.
 
 ---
 
@@ -315,7 +314,7 @@ Turn the qualifying live results into a clear, evidence-based shortlist and fini
 
 1. Calculate the documented price, rating, and popularity scores.
 2. Select no more than five finalists.
-3. Retrieve product details only for those finalists, with a hard maximum of five detail requests per user search.
+3. Expand the Firecrawl product JSON schema for the bounded candidate pages so the five finalists can include richer product details.
 4. Normalize available material, size, piece count, color choices, availability, and delivery evidence.
 5. Render final cards in score order with rank badges and factual explanations.
 6. Display **Not provided** when a field is absent.
@@ -324,12 +323,7 @@ Turn the qualifying live results into a clear, evidence-based shortlist and fini
 
 ### API-usage guardrail
 
-A completed search may use at most:
-
-- one Amazon Search API request; and
-- five Amazon Product detail requests.
-
-Therefore, the maximum is six provider requests per user action. Do not retry automatically more than once, paginate automatically, or enrich products outside the five finalists.
+The preferred flow uses one Firecrawl Search operation with bounded scrape options and a maximum of ten Amazon product pages per user action. If the current Firecrawl API cannot return the required JSON through Search, Codex must stop and explain the observed limitation before using a separate bounded Batch Scrape fallback. Do not retry automatically more than once, paginate automatically, crawl Amazon, or exceed ten scraped product pages.
 
 ### Acceptance criteria
 
@@ -341,8 +335,8 @@ Therefore, the maximum is six provider requests per user action. Do not retry au
 6. Missing evidence is labeled and never invented.
 7. Each card has a concise, data-grounded ranking explanation.
 8. Material, size, piece count, and colors appear when the provider supplies them.
-9. One failed detail request does not cancel other finalists.
-10. Provider usage never exceeds six requests per user action.
+9. One failed or incomplete scraped result does not cancel other finalists.
+10. Provider usage stays within one bounded Search operation and no more than ten scraped result pages per user action, unless the user explicitly approves the documented Batch Scrape fallback.
 11. The interface remains usable at 375px and normal laptop width.
 12. Buttons disable while working and re-enable after success or failure.
 13. Keyboard focus and labels are understandable.
@@ -364,7 +358,6 @@ Run the complete regression checklist, report every acceptance result, list miss
 Handle at minimum:
 
 - blank or overly long search phrase;
-- malformed ZIP code;
 - missing, negative, or non-numeric price;
 - minimum price greater than maximum price;
 - no qualifying products;
@@ -372,7 +365,7 @@ Handle at minimum:
 - missing API key;
 - provider authentication, rate-limit, timeout, and non-200 errors;
 - malformed provider response;
-- one or more failed detail requests;
+- one or more failed or incomplete scraped product results;
 - frontend network failure;
 - Amazon data changing between search and click-through.
 
@@ -392,8 +385,8 @@ Do not add:
 - affiliate monetization unless separately approved;
 - exact stock counts or guaranteed delivery dates;
 - price tracking, scheduled jobs, alerts, or email;
-- LLM calls, review summarization, chat, RAG, or agents;
-- Firecrawl or direct Amazon scraping;
+- direct project LLM calls, review summarization, chat, RAG, or agents;
+- Firecrawl Crawl, Interact, Agent, browser automation, or direct Amazon scraping outside the approved Search flow;
 - browser automation;
 - a frontend framework, CSS framework, or design system;
 - analytics, Docker, or custom CI/CD;
@@ -444,7 +437,7 @@ Codex should:
 3. execute the current phase acceptance criteria;
 4. rerun all earlier regression checks;
 5. inspect tracked files for secret leakage;
-6. report files changed, dependencies, tests, API-call count, and unresolved issues;
+6. report files changed, dependencies, tests, Firecrawl operations/result pages/credits used, and unresolved issues;
 7. create the requested Git checkpoint and push only after the phase works;
 8. test the deployed Vercel URL;
 9. stop at the phase gate.
@@ -455,5 +448,4 @@ The student should not need to type routine terminal commands manually.
 
 ## 12. Definition of done
 
-Another shopper can open the public URL without coaching, enter a kitchen-utensil-set query, five-digit US ZIP code, and price range, then receive up to five ranked products with understandable evidence and working Amazon links. The experience remains honest about missing data and changing marketplace conditions, works on laptop and phone widths, and exposes no credentials.
-
+Another shopper can open the public URL without coaching, enter a kitchen-utensil-set query and price range, then receive up to five ranked products with understandable evidence and working Amazon links. The experience clearly describes availability as general Amazon.com information, remains honest about missing data and changing marketplace conditions, works on laptop and phone widths, and exposes no credentials.
