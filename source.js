@@ -13,15 +13,42 @@ async function readSamples() {
 
 export const source = Object.freeze({
   async load(params) {
-    const items = await readSamples();
-    return items
-      .filter((item) => item.price >= params.minPrice && item.price <= params.maxPrice)
-      .slice(0, config.candidateLimit);
+    if (config.sampleMode) {
+      const items = await readSamples();
+      return items
+        .filter((item) => item.price >= params.minPrice && item.price <= params.maxPrice)
+        .slice(0, config.candidateLimit);
+    }
+
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), config.requestTimeoutMs);
+    try {
+      const response = await fetch(config.searchRoute, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(params),
+        signal: controller.signal
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(payload?.error?.message || "Live product information could not be loaded.");
+      }
+      if (!payload || !Array.isArray(payload.items)) {
+        throw new Error("The product service returned an unexpected response.");
+      }
+      return payload.items.slice(0, config.candidateLimit);
+    } catch (error) {
+      if (error?.name === "AbortError") {
+        throw new Error("The live search took too long. Please try again.");
+      }
+      throw error;
+    } finally {
+      window.clearTimeout(timeout);
+    }
   },
 
-  async detail(id) {
-    const items = await readSamples();
-    return items.find((item) => item.id === id) ?? null;
+  async detail() {
+    throw new Error("Separate detail loading is not used in this project.");
   },
 
   async save() {

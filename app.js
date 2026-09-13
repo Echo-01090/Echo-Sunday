@@ -4,6 +4,7 @@ import { clearResults, renderList, setBusy, setStatus, showEmpty, showError } fr
 
 const form = document.querySelector("#search-form");
 const demoButtons = document.querySelectorAll("[data-demo-state]");
+const demoControls = document.querySelector(".demo-controls");
 
 function readParams() {
   const formData = new FormData(form);
@@ -34,16 +35,18 @@ async function runSearch() {
   }
 
   setBusy(true);
-  setStatus("Comparing sample kitchen sets…");
+  setStatus(config.sampleMode ? "Comparing sample kitchen sets…" : "Searching current Amazon.com product pages…");
   clearResults();
   try {
     const items = await source.load(params);
     if (!items.length) {
-      showEmpty("No sample products match that price range. Try widening your budget.");
+      showEmpty(config.sampleMode ? "No sample products match that price range. Try widening your budget." : "No eligible Amazon products were found in that price range. Try widening your budget or changing the phrase.");
       return;
     }
     renderList(items);
-    setStatus(`${items.length} sample ${items.length === 1 ? "match" : "matches"} found. ${config.availabilityNotice}`);
+    const mode = config.sampleMode ? "sample " : "live ";
+    const retrieved = config.sampleMode ? "" : ` Retrieved ${new Date().toLocaleString()}.`;
+    setStatus(`${items.length} ${mode}${items.length === 1 ? "match" : "matches"} found.${retrieved} ${config.availabilityNotice}`);
   } catch (error) {
     showError(error instanceof Error ? error.message : "Something went wrong while preparing the shortlist.");
   } finally {
@@ -55,6 +58,8 @@ form.addEventListener("submit", (event) => {
   event.preventDefault();
   runSearch();
 });
+
+demoControls.hidden = !config.sampleMode;
 
 demoButtons.forEach((button) => {
   button.addEventListener("click", async () => {
@@ -71,4 +76,9 @@ demoButtons.forEach((button) => {
   });
 });
 
-runSearch();
+if (config.sampleMode) {
+  runSearch();
+} else {
+  clearResults();
+  setStatus("Enter a phrase and budget to search current Amazon.com product pages.");
+}

@@ -25,3 +25,18 @@ Run this numbered checklist by hand in about three minutes.
 18. The public deployment displays the Phase 0 smoke-test message.
 19. The interface requests no ZIP code and makes no ZIP-specific availability claim.
 20. The visible palette uses cobalt, teal, white, and coral without a black-and-yellow scheme.
+
+## Phase 1 checks
+
+21. `source.load(params)` makes exactly one same-origin request per submitted search in live mode.
+22. Page load and sample-state previews do not trigger a live Firecrawl request.
+23. The server rejects non-POST requests, malformed JSON, invalid query lengths, invalid prices, and reversed price ranges.
+24. The Firecrawl key is read only from `FIRECRAWL_API_KEY` on the server and never appears in browser code or responses.
+25. Firecrawl Search uses web results, `amazon.com`, US country/location, English-US scraping, and no more than five result pages.
+26. One bounded retry is allowed only for HTTP 429 or 5xx responses; Crawl, Interact, Agent, and batch endpoints are not used.
+27. Only public `https://www.amazon.com/` product URLs are accepted.
+28. Products without a numeric price, outside the submitted price range, or explicitly unavailable are excluded.
+29. The success body contains exactly `items`, `retrievedAt`, `marketplace`, and `notice`; errors use the protected error envelope.
+30. Every returned product contains every normalized key with the documented missing-value defaults.
+31. Empty and upstream-failure states remain readable, and the busy state always clears.
+32. The public deployment performs one small live US search successfully with provider operation, result-page, and credit counts recorded during verification.
